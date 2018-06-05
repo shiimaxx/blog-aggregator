@@ -1,36 +1,70 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/syndtr/goleveldb/leveldb"
+	"os"
 )
 
+const defaultListenPort = "8080"
+
 type server struct {
-	db     *leveldb.DB
 	router *http.ServeMux
 	port   int
+	config config
+}
+
+type config struct {
+	userID string
+}
+
+type entriesResponse struct {
+	Entries []entry `json:"entries"`
 }
 
 func (s *server) routes() {
+	s.router.HandleFunc("/api/v1/entries", s.handleEntries())
 	s.router.HandleFunc("/", s.handleRoot())
 }
 
 func (s *server) handleRoot() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Hello World!")
+		fmt.Fprintln(w, "OK")
+	}
+}
+
+func (s *server) handleEntries() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		entries, err := fetchQiitaEntries(s.config.userID)
+		if err != nil {
+			fmt.Fprintln(w, err.Error())
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		var res entriesResponse
+		res.Entries = entries
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			log.Print(err.Error())
+		}
 	}
 }
 
 func main() {
-	db, err := leveldb.OpenFile("./db", nil)
-	defer db.Close()
-	if err != nil {
-		log.Fatal(err)
+	var (
+		port   string
+		userID string
+	)
+	if port = os.Getenv("LISTEN_PORT"); port == "" {
+		port = defaultListenPort
 	}
-	app := server{db: db, router: http.NewServeMux()}
+	if userID = os.Getenv("USER_ID"); userID == "" {
+		log.Fatal("USER_ID is required but missing")
+	}
+
+	app := server{router: http.NewServeMux(), config: config{userID: userID}}
 	app.routes()
-	log.Fatal(http.ListenAndServe(":8080", app.router))
+	log.Fatal(http.ListenAndServe(":"+port, app.router))
 }

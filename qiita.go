@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type qiitaEntriy struct {
+type entry struct {
 	Title     string    `json:"title"`
 	URL       string    `json:"url"`
 	CreatedAt time.Time `json:"created_at"`
@@ -16,7 +16,7 @@ type qiitaEntriy struct {
 
 const baseURL = "https://qiita.com/api/v2"
 
-func fetchEntries(userID string) ([]qiitaEntriy, error) {
+func fetchQiitaEntries(userID string) ([]entry, error) {
 	endpoint := fmt.Sprintf("%s/users/%s/items", baseURL, userID)
 
 	res, err := http.Get(endpoint)
@@ -29,10 +29,10 @@ func fetchEntries(userID string) ([]qiitaEntriy, error) {
 		return nil, err
 	}
 
-	var q []qiitaEntriy
-	if err := json.Unmarshal(body, &q); err != nil {
+	var e []entry
+	if err := json.Unmarshal(body, &e); err != nil {
 		return nil, err
 	}
 
-	return q, nil
+	return e, nil
 }
