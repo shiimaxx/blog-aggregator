@@ -39,7 +39,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		entries, err := fetchQiitaEntries(s.config.userID)
 		if err != nil {
-			fmt.Fprintln(w, err.Error())
+			http.Error(w, "error", http.StatusInternalServerError)
 			return
 		}
 
