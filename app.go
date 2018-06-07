@@ -12,7 +12,7 @@ const defaultListenPort = "8080"
 
 type server struct {
 	router *http.ServeMux
-	port   int
+	port   string
 	config config
 }
 
@@ -64,7 +64,11 @@ func main() {
 		log.Fatal("USER_ID is required but missing")
 	}
 
-	app := server{router: http.NewServeMux(), config: config{userID: userID}}
+	app := server{
+		router: http.NewServeMux(),
+		port:   port,
+		config: config{userID: userID},
+	}
 	app.routes()
-	log.Fatal(http.ListenAndServe(":"+port, app.router))
+	log.Fatal(http.ListenAndServe(":"+app.port, app.router))
 }
