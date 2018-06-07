@@ -13,6 +13,7 @@ const defaultListenPort = "8080"
 type server struct {
 	router *http.ServeMux
 	port   string
+	logger *log.Logger
 	config config
 }
 
@@ -47,7 +48,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 		var res entriesResponse
 		res.Entries = entries
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			log.Print(err.Error())
+			s.logger.Print(err.Error())
 		}
 	}
 }
@@ -67,6 +68,7 @@ func main() {
 	app := server{
 		router: http.NewServeMux(),
 		port:   port,
+		logger: log.New(os.Stdout, "", log.Lshortfile),
 		config: config{userID: userID},
 	}
 	app.routes()
