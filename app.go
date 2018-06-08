@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -32,7 +31,7 @@ func (s *server) routes() {
 
 func (s *server) handleRoot() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "OK")
+		http.Redirect(w, r, "/api/v1/entries", http.StatusMovedPermanently)
 	}
 }
 
