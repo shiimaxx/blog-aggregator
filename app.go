@@ -39,6 +39,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		entries, err := fetchQiitaEntries(s.config.userID)
 		if err != nil {
+			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 			http.Error(w, "error", http.StatusInternalServerError)
 			return
 		}
@@ -47,7 +48,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 		var res entriesResponse
 		res.Entries = entries
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			s.logger.Print(err.Error())
+			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 		}
 	}
 }
