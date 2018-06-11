@@ -22,7 +22,7 @@ func fetchQiitaEntries(userID string) ([]entry, error) {
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch qiita entries: %s", err.Error())
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -51,10 +51,10 @@ func fetchQiitaEntries(userID string) ([]entry, error) {
 
 	select {
 	case <-errCh:
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch qiita entries: %s", err.Error())
 	case <-doneCh:
 		if err := json.Unmarshal(body, &e); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to fetch qiita entries: %s", err.Error())
 		}
 	}
 
