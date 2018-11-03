@@ -5,11 +5,12 @@ ENV GOARCH=amd64
 
 WORKDIR /go/src/app
 COPY . .
-RUN GOOS=linux GOARCH=amd64 go build
+RUN GOOS=linux GOARCH=amd64 go build -a -tags netgo -installsuffix netgo -o blog-aggregator .
 
 
 FROM alpine
 
 COPY --from=build /go/src/app/blog-aggregator /blog-aggregator
+RUN apk add --no-cache --update ca-certificates
 EXPOSE 8080
 ENTRYPOINT ["/blog-aggregator"]
