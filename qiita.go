@@ -50,7 +50,7 @@ func fetchQiitaEntries(userID string) ([]entry, error) {
 	var e []entry
 
 	select {
-	case <-errCh:
+	case err := <-errCh:
 		return nil, fmt.Errorf("failed to fetch qiita entries: %s", err.Error())
 	case <-doneCh:
 		if err := json.Unmarshal(body, &e); err != nil {
