@@ -1,4 +1,4 @@
-package main
+package qiita
 
 import (
 	"context"
@@ -7,17 +7,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-)
 
-type entry struct {
-	Title     string    `json:"title"`
-	URL       string    `json:"url"`
-	CreatedAt time.Time `json:"created_at"`
-}
+	"github.com/shiimaxx/blog-aggregator/structs"
+)
 
 const baseURL = "https://qiita.com/api/v2"
 
-func fetchQiitaEntries(userID string) ([]entry, error) {
+func FetchEntries(userID string) ([]structs.Entry, error) {
 	endpoint := fmt.Sprintf("%s/users/%s/items", baseURL, userID)
 
 	req, err := http.NewRequest("GET", endpoint, nil)
@@ -47,7 +43,7 @@ func fetchQiitaEntries(userID string) ([]entry, error) {
 		doneCh <- struct{}{}
 	}()
 
-	var e []entry
+	var e []structs.Entry
 
 	select {
 	case err := <-errCh:

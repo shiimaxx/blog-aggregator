@@ -5,6 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/shiimaxx/blog-aggregator/qiita"
+	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
 const defaultListenPort = "8080"
@@ -21,7 +24,7 @@ type config struct {
 }
 
 type entriesResponse struct {
-	Entries []entry `json:"entries"`
+	Entries []structs.Entry `json:"entries"`
 }
 
 func (s *server) routes() {
@@ -37,7 +40,7 @@ func (s *server) handleRoot() http.HandlerFunc {
 
 func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		entries, err := fetchQiitaEntries(s.config.userID)
+		entries, err := qiita.FetchEntries(s.config.userID)
 		if err != nil {
 			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 			http.Error(w, "error", http.StatusInternalServerError)
