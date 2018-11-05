@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/shiimaxx/blog-aggregator/hatenablog"
 	"github.com/shiimaxx/blog-aggregator/qiita"
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
@@ -20,7 +21,9 @@ type server struct {
 }
 
 type config struct {
-	userID string
+	userID       string
+	hatenaBlogID string
+	hatenaAPIKey string
 }
 
 type entriesResponse struct {
@@ -40,12 +43,21 @@ func (s *server) handleRoot() http.HandlerFunc {
 
 func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		entries, err := qiita.FetchEntries(s.config.userID)
+		q, err := qiita.FetchEntries(s.config.userID)
 		if err != nil {
 			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 			http.Error(w, "error", http.StatusInternalServerError)
 			return
 		}
+
+		h, err := hatenablog.FetchEntries(s.config.userID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
+		if err != nil {
+			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
+			http.Error(w, "error", http.StatusInternalServerError)
+			return
+		}
+
+		entries := append(q, h...)
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		var res entriesResponse
