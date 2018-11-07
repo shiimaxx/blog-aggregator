@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"golang.org/x/tools/blog/atom"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -15,7 +16,7 @@ const baseURL = "https://blog.hatena.ne.jp"
 
 // Result for hatenablog correction uri
 type Result struct {
-	Entry []structs.Entry `xml:"entry"`
+	Entries []atom.Entry `xml:"entry"`
 }
 
 // FetchEntries fetch entry list of hatena blog
@@ -24,7 +25,7 @@ func FetchEntries(userID, blogID, apiKey string) ([]structs.Entry, error) {
 
 	req, err := http.NewRequest("GET", endpoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch qiita entries: %s", err.Error())
+		return nil, fmt.Errorf("failed to fetch hatenablog entries: %s", err.Error())
 	}
 
 	req.SetBasicAuth(userID, apiKey)
@@ -58,9 +59,34 @@ func FetchEntries(userID, blogID, apiKey string) ([]structs.Entry, error) {
 		return nil, fmt.Errorf("failed to fetch hatenablog entries: %s", err.Error())
 	case <-doneCh:
 		if err := xml.Unmarshal(body, &r); err != nil {
-			return nil, fmt.Errorf("failed to fetch hatenablog entries: %s", err.Error())
+			return nil, fmt.Errorf("failed to parse xml: %s", err.Error())
 		}
 	}
 
-	return r.Entry, nil
+	var entries []structs.Entry
+
+	for _, e := range r.Entries {
+		title := e.Title
+
+		var url string
+		for _, l := range e.Link {
+			if l.Rel == "alternate" {
+				url = l.Href
+			}
+		}
+
+		layout := "2006-01-02T15:04:05-07:00"
+		createdAt, err := time.Parse(layout, string(e.Published))
+		if err != nil {
+			return nil, err
+		}
+
+		entries = append(entries, structs.Entry{
+			Title: title,
+			URL: url,
+			CreatedAt: createdAt,
+		})
+	}
+
+	return entries, nil
 }
