@@ -79,12 +79,18 @@ func main() {
 	if userID = os.Getenv("USER_ID"); userID == "" {
 		log.Fatal("USER_ID is required but missing")
 	}
+	hatenaBlogID := os.Getenv("HATENA_BLOG_ID")
+	hatenaBlogAPIKey := os.Getenv("HATENA_BLOG_API_KEY")
 
 	app := server{
 		router: http.NewServeMux(),
 		port:   port,
 		logger: log.New(os.Stdout, "", log.Lshortfile),
-		config: config{userID: userID},
+		config: config{
+			userID: userID,
+			hatenaBlogID: hatenaBlogID,
+			hatenaAPIKey: hatenaBlogAPIKey,
+		},
 	}
 	app.routes()
 	log.Fatal(http.ListenAndServe(":"+app.port, app.router))
