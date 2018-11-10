@@ -22,6 +22,7 @@ type server struct {
 
 type config struct {
 	userID       string
+	hatenaID string
 	hatenaBlogID string
 	hatenaAPIKey string
 }
@@ -50,7 +51,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 			return
 		}
 
-		h, err := hatenablog.FetchEntries(s.config.userID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
+		h, err := hatenablog.FetchEntries(s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
 		if err != nil {
 			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 			http.Error(w, "error", http.StatusInternalServerError)
@@ -79,6 +80,7 @@ func main() {
 	if userID = os.Getenv("USER_ID"); userID == "" {
 		log.Fatal("USER_ID is required but missing")
 	}
+	hatenaID := os.Getenv("HATENA_ID")
 	hatenaBlogID := os.Getenv("HATENA_BLOG_ID")
 	hatenaBlogAPIKey := os.Getenv("HATENA_BLOG_API_KEY")
 
@@ -88,6 +90,7 @@ func main() {
 		logger: log.New(os.Stdout, "", log.Lshortfile),
 		config: config{
 			userID: userID,
+			hatenaID: hatenaID,
 			hatenaBlogID: hatenaBlogID,
 			hatenaAPIKey: hatenaBlogAPIKey,
 		},
