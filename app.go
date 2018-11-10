@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 
 	"github.com/shiimaxx/blog-aggregator/hatenablog"
 	"github.com/shiimaxx/blog-aggregator/qiita"
@@ -22,7 +23,7 @@ type server struct {
 
 type config struct {
 	userID       string
-	hatenaID string
+	hatenaID     string
 	hatenaBlogID string
 	hatenaAPIKey string
 }
@@ -59,6 +60,9 @@ func (s *server) handleEntries() http.HandlerFunc {
 		}
 
 		entries := append(q, h...)
+		sort.Slice(entries, func(j, i int) bool {
+			return entries[i].CreatedAt.Before(entries[j].CreatedAt)
+		})
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		var res entriesResponse
@@ -89,8 +93,8 @@ func main() {
 		port:   port,
 		logger: log.New(os.Stdout, "", log.Lshortfile),
 		config: config{
-			userID: userID,
-			hatenaID: hatenaID,
+			userID:       userID,
+			hatenaID:     hatenaID,
 			hatenaBlogID: hatenaBlogID,
 			hatenaAPIKey: hatenaBlogAPIKey,
 		},
