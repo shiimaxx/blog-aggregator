@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"golang.org/x/tools/blog/atom"
 	"io/ioutil"
 	"net/http"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/shiimaxx/blog-aggregator/structs"
+	"golang.org/x/tools/blog/atom"
 )
 
 const baseURL = "https://blog.hatena.ne.jp"
@@ -43,6 +44,12 @@ func FetchEntries(userID, blogID, apiKey string) ([]structs.Entry, error) {
 			errCh <- err
 			return
 		}
+
+		if res.StatusCode != http.StatusOK {
+			errCh <- errors.New("request failed")
+			return
+		}
+
 		body, err = ioutil.ReadAll(res.Body)
 		defer res.Body.Close()
 		if err != nil {
@@ -82,8 +89,8 @@ func FetchEntries(userID, blogID, apiKey string) ([]structs.Entry, error) {
 		}
 
 		entries = append(entries, structs.Entry{
-			Title: title,
-			URL: url,
+			Title:     title,
+			URL:       url,
 			CreatedAt: createdAt,
 		})
 	}
