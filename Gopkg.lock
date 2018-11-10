@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
   digest = "1:f0ccfc7b2bad19fa7049f7a905d1dd24ab33209e6ae0ddcd5268ec521650c153"
   name = "golang.org/x/tools"
@@ -12,6 +20,9 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["golang.org/x/tools/blog/atom"]
+  input-imports = [
+    "github.com/pkg/errors",
+    "golang.org/x/tools/blog/atom",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
