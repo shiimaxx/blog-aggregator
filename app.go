@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"sync"
 
 	"github.com/shiimaxx/blog-aggregator/hatenablog"
 	"github.com/shiimaxx/blog-aggregator/qiita"
@@ -13,12 +14,14 @@ import (
 )
 
 const defaultListenPort = "8080"
+const defautlCacheExpiration = 600
 
 type server struct {
 	router *http.ServeMux
 	port   string
 	logger *log.Logger
 	config config
+	cache  memStorage
 }
 
 type config struct {
@@ -97,6 +100,10 @@ func main() {
 			hatenaID:     hatenaID,
 			hatenaBlogID: hatenaBlogID,
 			hatenaAPIKey: hatenaBlogAPIKey,
+		},
+		cache: memStorage{
+			items: make(map[string]item),
+			mu:    &sync.RWMutex{},
 		},
 	}
 	app.routes()
