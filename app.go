@@ -49,20 +49,26 @@ func (s *server) handleRoot() http.HandlerFunc {
 
 func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		wg := sync.WaitGroup{}
+
 		qCacheKey := r.RequestURI + "qiita"
 		var q []structs.Entry
 		if qCache := s.cache.Get(qCacheKey); qCache != nil {
 			q = qCache
 		} else {
 			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
-			e, err := qiita.FetchEntries(s.config.userID)
-			if err != nil {
-				s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
-				http.Error(w, "error", http.StatusInternalServerError)
-				return
-			}
-			q = e
-			s.cache.Set(qCacheKey, q, defaultCacheExpiration)
+			wg.Add(1)
+			go func() {
+				e, err := qiita.FetchEntries(s.config.userID)
+				if err != nil {
+					s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
+					http.Error(w, "error", http.StatusInternalServerError)
+					return
+				}
+				q = e
+				s.cache.Set(qCacheKey, q, defaultCacheExpiration)
+				wg.Done()
+			}()
 		}
 
 		hCacheKey := r.RequestURI + "hatenablog"
@@ -71,15 +77,21 @@ func (s *server) handleEntries() http.HandlerFunc {
 			h = hCache
 		} else {
 			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
-			e, err := hatenablog.FetchEntries(s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
-			if err != nil {
-				s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
-				http.Error(w, "error", http.StatusInternalServerError)
-				return
-			}
-			h = e
-			s.cache.Set(hCacheKey, h, defaultCacheExpiration)
+			wg.Add(1)
+			go func() {
+				e, err := hatenablog.FetchEntries(s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
+				if err != nil {
+					s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
+					http.Error(w, "error", http.StatusInternalServerError)
+					return
+				}
+				h = e
+				s.cache.Set(hCacheKey, h, defaultCacheExpiration)
+				wg.Done()
+			}()
 		}
+
+		wg.Wait()
 
 		entries := append(q, h...)
 		sort.Slice(entries, func(j, i int) bool {
