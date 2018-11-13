@@ -10,9 +10,7 @@ import (
 	"time"
 
 	"github.com/shiimaxx/blog-aggregator/hatenablog"
-
 	"github.com/shiimaxx/blog-aggregator/qiita"
-
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
