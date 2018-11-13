@@ -3,15 +3,17 @@ package main
 import (
 	"sync"
 	"time"
+
+	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
 type storage interface {
-	Get(key string) []byte
-	Set(key string, content []byte, duration time.Duration)
+	Get(key string) []structs.Entry
+	Set(key string, content []structs.Entry, duration time.Duration)
 }
 
 type item struct {
-	content    []byte
+	content    []structs.Entry
 	expiration int64
 }
 
@@ -20,7 +22,7 @@ type memStorage struct {
 	mu    *sync.RWMutex
 }
 
-func (m *memStorage) Get(key string) []byte {
+func (m *memStorage) Get(key string) []structs.Entry {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -35,7 +37,7 @@ func (m *memStorage) Get(key string) []byte {
 	return i.content
 }
 
-func (m *memStorage) Set(key string, content []byte, duration time.Duration) {
+func (m *memStorage) Set(key string, content []structs.Entry, duration time.Duration) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 

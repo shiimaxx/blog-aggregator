@@ -7,21 +7,24 @@ import (
 	"os"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/shiimaxx/blog-aggregator/hatenablog"
+
 	"github.com/shiimaxx/blog-aggregator/qiita"
+
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
 const defaultListenPort = "8080"
-const defautlCacheExpiration = 600
+const defaultCacheExpiration = 60 * time.Second
 
 type server struct {
 	router *http.ServeMux
 	port   string
 	logger *log.Logger
 	config config
-	cache  memStorage
+	cache  storage
 }
 
 type config struct {
@@ -48,18 +51,36 @@ func (s *server) handleRoot() http.HandlerFunc {
 
 func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		q, err := qiita.FetchEntries(s.config.userID)
-		if err != nil {
-			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
-			http.Error(w, "error", http.StatusInternalServerError)
-			return
+		qCacheKey := r.RequestURI + "qiita"
+		var q []structs.Entry
+		if qCache := s.cache.Get(qCacheKey); qCache != nil {
+			q = qCache
+		} else {
+			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
+			e, err := qiita.FetchEntries(s.config.userID)
+			if err != nil {
+				s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
+				http.Error(w, "error", http.StatusInternalServerError)
+				return
+			}
+			q = e
+			s.cache.Set(qCacheKey, q, defaultCacheExpiration)
 		}
 
-		h, err := hatenablog.FetchEntries(s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
-		if err != nil {
-			s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
-			http.Error(w, "error", http.StatusInternalServerError)
-			return
+		hCacheKey := r.RequestURI + "hatenablog"
+		var h []structs.Entry
+		if hCache := s.cache.Get(hCacheKey); hCache != nil {
+			h = hCache
+		} else {
+			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
+			e, err := hatenablog.FetchEntries(s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
+			if err != nil {
+				s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
+				http.Error(w, "error", http.StatusInternalServerError)
+				return
+			}
+			h = e
+			s.cache.Set(hCacheKey, h, defaultCacheExpiration)
 		}
 
 		entries := append(q, h...)
@@ -101,7 +122,7 @@ func main() {
 			hatenaBlogID: hatenaBlogID,
 			hatenaAPIKey: hatenaBlogAPIKey,
 		},
-		cache: memStorage{
+		cache: &memStorage{
 			items: make(map[string]item),
 			mu:    &sync.RWMutex{},
 		},
