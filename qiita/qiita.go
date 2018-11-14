@@ -13,6 +13,7 @@ import (
 
 const baseURL = "https://qiita.com/api/v2"
 
+// FetchEntries fetch qiita entries of specified user id
 func FetchEntries(userID string) ([]structs.Entry, error) {
 	endpoint := fmt.Sprintf("%s/users/%s/items", baseURL, userID)
 
