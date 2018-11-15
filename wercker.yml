@@ -1,7 +1,8 @@
 box: golang
 build:
   steps:
-    - golint
+    - wercker/setup-go-workspace
+      package-dir: github.com/shiimaxx/blog-aggregator
     - script:
-      name: "go test"
-      code: "go test"
+      name: go test
+      code: go test -v ./...
