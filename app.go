@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -59,7 +60,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
 			wg.Add(1)
 			go func() {
-				e, err := qiita.FetchEntries(s.config.userID)
+				e, err := qiita.FetchEntries(context.TODO(), s.config.userID)
 				if err != nil {
 					s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 					http.Error(w, "error", http.StatusInternalServerError)
@@ -79,7 +80,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
 			wg.Add(1)
 			go func() {
-				e, err := hatenablog.FetchEntries(s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
+				e, err := hatenablog.FetchEntries(context.TODO(), s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
 				if err != nil {
 					s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
 					http.Error(w, "error", http.StatusInternalServerError)

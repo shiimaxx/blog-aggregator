@@ -21,7 +21,7 @@ type Result struct {
 }
 
 // FetchEntries fetch entry list of hatena blog
-func FetchEntries(userID, blogID, apiKey string) ([]structs.Entry, error) {
+func FetchEntries(ctx context.Context, userID, blogID, apiKey string) ([]structs.Entry, error) {
 	endpoint := fmt.Sprintf("%s/%s/%s/atom/entry", baseURL, userID, blogID)
 
 	req, err := http.NewRequest("GET", endpoint, nil)
@@ -31,8 +31,6 @@ func FetchEntries(userID, blogID, apiKey string) ([]structs.Entry, error) {
 
 	req.SetBasicAuth(userID, apiKey)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	req = req.WithContext(ctx)
 
 	var body []byte

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
@@ -14,7 +13,7 @@ import (
 const baseURL = "https://qiita.com/api/v2"
 
 // FetchEntries fetch qiita entries of specified user id
-func FetchEntries(userID string) ([]structs.Entry, error) {
+func FetchEntries(ctx context.Context, userID string) ([]structs.Entry, error) {
 	endpoint := fmt.Sprintf("%s/users/%s/items", baseURL, userID)
 
 	req, err := http.NewRequest("GET", endpoint, nil)
@@ -22,8 +21,6 @@ func FetchEntries(userID string) ([]structs.Entry, error) {
 		return nil, fmt.Errorf("failed to fetch qiita entries: %s", err.Error())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	req = req.WithContext(ctx)
 
 	var body []byte
