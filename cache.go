@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/base64"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +23,10 @@ type item struct {
 type memStorage struct {
 	items map[string]item
 	mu    *sync.RWMutex
+}
+
+func GenerateCacheKey(url, service string) string {
+	return fmt.Sprintf("ba:%s:", service) + strings.TrimRight(base64.URLEncoding.EncodeToString([]byte(url)), "=")
 }
 
 func (m *memStorage) Get(key string) []structs.Entry {

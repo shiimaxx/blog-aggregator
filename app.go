@@ -52,7 +52,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		wg := sync.WaitGroup{}
 
-		qCacheKey := r.RequestURI + "qiita"
+		qCacheKey := GenerateCacheKey(r.URL.String(), "qiita")
 		var q []structs.Entry
 		if qCache := s.cache.Get(qCacheKey); qCache != nil {
 			q = qCache
@@ -72,7 +72,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 			}()
 		}
 
-		hCacheKey := r.RequestURI + "hatenablog"
+		hCacheKey := GenerateCacheKey(r.URL.String(), "hatenablog")
 		var h []structs.Entry
 		if hCache := s.cache.Get(hCacheKey); hCache != nil {
 			h = hCache
