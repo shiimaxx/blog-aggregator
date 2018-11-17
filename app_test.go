@@ -52,12 +52,15 @@ func TestHandleEntries_CacheHit(t *testing.T) {
 			mu:    &sync.RWMutex{},
 		},
 	}
-	s.cache.Set("qiita", []structs.Entry{
+	qCacheKey := GenerateCacheKey("/api/v1/entries", "qiita")
+	s.cache.Set(qCacheKey, []structs.Entry{
 		{Title: "a", URL: "https://example.com/a", CreatedAt: now},
 		{Title: "b", URL: "https://example.com/b", CreatedAt: now.Add(1 * time.Hour)},
 		{Title: "c", URL: "https://example.com/c", CreatedAt: now.Add(2 * time.Hour)},
 	}, 60*time.Second)
-	s.cache.Set("hatenablog", []structs.Entry{
+
+	hCacheKey := GenerateCacheKey("/api/v1/entries", "hatenablog")
+	s.cache.Set(hCacheKey, []structs.Entry{
 		{Title: "d", URL: "https://example.com/d", CreatedAt: now.Add(3 * time.Hour)},
 		{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
 		{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
