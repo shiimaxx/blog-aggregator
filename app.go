@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/shiimaxx/blog-aggregator/hatenablog"
-	"github.com/shiimaxx/blog-aggregator/qiita"
+	"github.com/shiimaxx/blog-aggregator/blogservice/hatenablog"
+	"github.com/shiimaxx/blog-aggregator/blogservice/qiita"
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
