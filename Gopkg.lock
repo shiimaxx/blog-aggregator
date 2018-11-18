@@ -11,6 +11,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "UT"
+  revision = "42b317875d0fa942474b76e1b46a6060d720ae6e"
+
+[[projects]]
+  branch = "master"
   digest = "1:f0ccfc7b2bad19fa7049f7a905d1dd24ab33209e6ae0ddcd5268ec521650c153"
   name = "golang.org/x/tools"
   packages = ["blog/atom"]
@@ -22,6 +30,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/pkg/errors",
+    "golang.org/x/sync/errgroup",
     "golang.org/x/tools/blog/atom",
   ]
   solver-name = "gps-cdcl"
