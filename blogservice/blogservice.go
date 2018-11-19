@@ -20,6 +20,7 @@ func (b *BlogService) Fetch() ([]structs.Entry, error) {
 	var entries []structs.Entry
 	var mu sync.Mutex
 	for _, fn := range b.FetchFunc {
+		fn := fn
 		eg.Go(func() error {
 			e, err := fn()
 			if err != nil {

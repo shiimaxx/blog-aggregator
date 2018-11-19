@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/shiimaxx/blog-aggregator/blogservice"
 	"github.com/shiimaxx/blog-aggregator/blogservice/hatenablog"
 	"github.com/shiimaxx/blog-aggregator/blogservice/qiita"
 	"github.com/shiimaxx/blog-aggregator/structs"
@@ -19,11 +20,12 @@ const defaultListenPort = "8080"
 const defaultCacheExpiration = 60 * time.Second
 
 type server struct {
-	router *http.ServeMux
-	port   string
-	logger *log.Logger
-	config config
-	cache  storage
+	router      *http.ServeMux
+	port        string
+	logger      *log.Logger
+	config      config
+	cache       storage
+	blogService *blogservice.BlogService
 }
 
 type config struct {
@@ -35,6 +37,17 @@ type config struct {
 
 type entriesResponse struct {
 	Entries []structs.Entry `json:"entries"`
+}
+
+func (s *server) blogservices() {
+	s.blogService.Add(func() ([]structs.Entry, error) {
+		return qiita.FetchEntries(context.TODO(), s.config.userID)
+	})
+	if s.config.hatenaID != "" {
+		s.blogService.Add(func() ([]structs.Entry, error) {
+			return hatenablog.FetchEntries(context.TODO(), s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
+		})
+	}
 }
 
 func (s *server) routes() {
@@ -50,51 +63,20 @@ func (s *server) handleRoot() http.HandlerFunc {
 
 func (s *server) handleEntries() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		wg := sync.WaitGroup{}
-
-		qCacheKey := GenerateCacheKey(r.URL.String(), "qiita")
-		var q []structs.Entry
-		if qCache := s.cache.Get(qCacheKey); qCache != nil {
-			q = qCache
+		cacheKey := GenerateCacheKey(r.URL.String(), "")
+		var entries []structs.Entry
+		if cache := s.cache.Get(cacheKey); cache != nil {
+			entries = cache
 		} else {
 			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
-			wg.Add(1)
-			go func() {
-				e, err := qiita.FetchEntries(context.TODO(), s.config.userID)
-				if err != nil {
-					s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
-					http.Error(w, "error", http.StatusInternalServerError)
-					return
-				}
-				q = e
-				s.cache.Set(qCacheKey, q, defaultCacheExpiration)
-				wg.Done()
-			}()
+			e, err := s.blogService.Fetch()
+			if err != nil {
+				return
+			}
+			s.cache.Set(cacheKey, e, defaultCacheExpiration)
+			entries = e
 		}
 
-		hCacheKey := GenerateCacheKey(r.URL.String(), "hatenablog")
-		var h []structs.Entry
-		if hCache := s.cache.Get(hCacheKey); hCache != nil {
-			h = hCache
-		} else {
-			s.logger.Printf("[INFO] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, "cache miss")
-			wg.Add(1)
-			go func() {
-				e, err := hatenablog.FetchEntries(context.TODO(), s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
-				if err != nil {
-					s.logger.Printf("[ERROR] %s %s %s %s", r.Method, r.URL.Host, r.URL.Path, err.Error())
-					http.Error(w, "error", http.StatusInternalServerError)
-					return
-				}
-				h = e
-				s.cache.Set(hCacheKey, h, defaultCacheExpiration)
-				wg.Done()
-			}()
-		}
-
-		wg.Wait()
-
-		entries := append(q, h...)
 		sort.Slice(entries, func(j, i int) bool {
 			return entries[i].CreatedAt.Before(entries[j].CreatedAt)
 		})
@@ -137,7 +119,11 @@ func main() {
 			items: make(map[string]item),
 			mu:    &sync.RWMutex{},
 		},
+		blogService: &blogservice.BlogService{
+			FetchFunc: []func() ([]structs.Entry, error){},
+		},
 	}
+	app.blogservices()
 	app.routes()
 	log.Fatal(http.ListenAndServe(":"+app.port, app.router))
 }
