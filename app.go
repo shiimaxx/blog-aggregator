@@ -29,7 +29,7 @@ type server struct {
 }
 
 type config struct {
-	userID       string
+	qiitaID      string
 	hatenaID     string
 	hatenaBlogID string
 	hatenaAPIKey string
@@ -40,9 +40,11 @@ type entriesResponse struct {
 }
 
 func (s *server) blogservices() {
-	s.blogService.Add(func() ([]structs.Entry, error) {
-		return qiita.FetchEntries(context.TODO(), s.config.userID)
-	})
+	if s.config.qiitaID != "" {
+		s.blogService.Add(func() ([]structs.Entry, error) {
+			return qiita.FetchEntries(context.TODO(), s.config.qiitaID)
+		})
+	}
 	if s.config.hatenaID != "" {
 		s.blogService.Add(func() ([]structs.Entry, error) {
 			return hatenablog.FetchEntries(context.TODO(), s.config.hatenaID, s.config.hatenaBlogID, s.config.hatenaAPIKey)
@@ -91,16 +93,12 @@ func (s *server) handleEntries() http.HandlerFunc {
 }
 
 func main() {
-	var (
-		port   string
-		userID string
-	)
+	var port string
 	if port = os.Getenv("LISTEN_PORT"); port == "" {
 		port = defaultListenPort
 	}
-	if userID = os.Getenv("USER_ID"); userID == "" {
-		log.Fatal("USER_ID is required but missing")
-	}
+
+	qiitaID := os.Getenv("QIITA_ID")
 	hatenaID := os.Getenv("HATENA_ID")
 	hatenaBlogID := os.Getenv("HATENA_BLOG_ID")
 	hatenaBlogAPIKey := os.Getenv("HATENA_BLOG_API_KEY")
@@ -110,7 +108,7 @@ func main() {
 		port:   port,
 		logger: log.New(os.Stdout, "", log.Lshortfile),
 		config: config{
-			userID:       userID,
+			qiitaID:      qiitaID,
 			hatenaID:     hatenaID,
 			hatenaBlogID: hatenaBlogID,
 			hatenaAPIKey: hatenaBlogAPIKey,
