@@ -11,7 +11,7 @@ docker build -t docker-blog-aggregator .
 ## Run
 
 ```
-docker run -it --rm --env USER_ID=<user id> -p 8080:8080 docker-blog-aggregator
+ docker run -it --rm --env QIITA_ID=<qiita id> --env HATENA_ID=<hatena id> --env HATENA_BLOG_ID=<hatenablog id> --env HATENA_BLOG_API_KEY=<hatenablog api key> -p 8080:8080 docker-blog-aggregator
 ```
 
 ## License
