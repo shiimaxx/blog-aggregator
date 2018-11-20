@@ -45,22 +45,18 @@ func TestHandleEntries_CacheHit(t *testing.T) {
 	s := server{
 		logger: log.New(os.Stdout, "", log.Lshortfile),
 		config: config{
-			userID: "testuser",
+			qiitaID: "testuser",
 		},
 		cache: &memStorage{
 			items: make(map[string]item),
 			mu:    &sync.RWMutex{},
 		},
 	}
-	qCacheKey := GenerateCacheKey("/api/v1/entries", "qiita")
-	s.cache.Set(qCacheKey, []structs.Entry{
+	cacheKey := GenerateCacheKey("/api/v1/entries", "")
+	s.cache.Set(cacheKey, []structs.Entry{
 		{Title: "a", URL: "https://example.com/a", CreatedAt: now},
 		{Title: "b", URL: "https://example.com/b", CreatedAt: now.Add(1 * time.Hour)},
 		{Title: "c", URL: "https://example.com/c", CreatedAt: now.Add(2 * time.Hour)},
-	}, 60*time.Second)
-
-	hCacheKey := GenerateCacheKey("/api/v1/entries", "hatenablog")
-	s.cache.Set(hCacheKey, []structs.Entry{
 		{Title: "d", URL: "https://example.com/d", CreatedAt: now.Add(3 * time.Hour)},
 		{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
 		{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
