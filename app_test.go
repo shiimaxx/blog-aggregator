@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -55,14 +58,15 @@ func TestHandleEntries_CacheHit(t *testing.T) {
 		},
 	}
 	cacheKey := GenerateCacheKey("/api/v1/entries", "")
-	s.cache.Set(cacheKey, []structs.Entry{
+	dummyData := []structs.Entry{
 		{Title: "a", URL: "https://example.com/a", CreatedAt: now},
 		{Title: "b", URL: "https://example.com/b", CreatedAt: now.Add(1 * time.Hour)},
 		{Title: "c", URL: "https://example.com/c", CreatedAt: now.Add(2 * time.Hour)},
 		{Title: "d", URL: "https://example.com/d", CreatedAt: now.Add(3 * time.Hour)},
 		{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
 		{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
-	}, 60*time.Second)
+	}
+	s.cache.Set(cacheKey, dummyData, 60*time.Second)
 
 	handler := s.handleEntries()
 
@@ -71,6 +75,16 @@ func TestHandleEntries_CacheHit(t *testing.T) {
 	if got, want := rec.Code, http.StatusOK; got != want {
 		t.Fatalf("got %v, want %v", got, want)
 	}
+
+	data, err := ioutil.ReadAll(rec.Body)
+	var e entriesResponse
+	if err := json.Unmarshal(data, &e); err != nil {
+		t.Fatal("json Unmarshal failed: ", err)
+	}
+	if got, want := e.Entries, dummyData; reflect.DeepEqual(got, want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+
 }
 
 func TestHandleEntries_CacheMiss(t *testing.T) {
@@ -95,15 +109,16 @@ func TestHandleEntries_CacheMiss(t *testing.T) {
 		},
 	}
 
+	dummyData := []structs.Entry{
+		{Title: "a", URL: "https://example.com/a", CreatedAt: now},
+		{Title: "b", URL: "https://example.com/b", CreatedAt: now.Add(1 * time.Hour)},
+		{Title: "c", URL: "https://example.com/c", CreatedAt: now.Add(2 * time.Hour)},
+		{Title: "d", URL: "https://example.com/d", CreatedAt: now.Add(3 * time.Hour)},
+		{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
+		{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
+	}
 	mockFunc := func() ([]structs.Entry, error) {
-		return []structs.Entry{
-			{Title: "a", URL: "https://example.com/a", CreatedAt: now},
-			{Title: "b", URL: "https://example.com/b", CreatedAt: now.Add(1 * time.Hour)},
-			{Title: "c", URL: "https://example.com/c", CreatedAt: now.Add(2 * time.Hour)},
-			{Title: "d", URL: "https://example.com/d", CreatedAt: now.Add(3 * time.Hour)},
-			{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
-			{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
-		}, nil
+		return dummyData, nil
 	}
 	s.blogService.Add(mockFunc)
 
@@ -112,6 +127,15 @@ func TestHandleEntries_CacheMiss(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	if got, want := rec.Code, http.StatusOK; got != want {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+
+	data, err := ioutil.ReadAll(rec.Body)
+	var e entriesResponse
+	if err := json.Unmarshal(data, &e); err != nil {
+		t.Fatal("json Unmarshal failed: ", err)
+	}
+	if got, want := e.Entries, dummyData; reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
 }
