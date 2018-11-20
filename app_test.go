@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shiimaxx/blog-aggregator/blogservice"
+
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
@@ -61,6 +63,49 @@ func TestHandleEntries_CacheHit(t *testing.T) {
 		{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
 		{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
 	}, 60*time.Second)
+
+	handler := s.handleEntries()
+
+	handler.ServeHTTP(rec, req)
+
+	if got, want := rec.Code, http.StatusOK; got != want {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+}
+
+func TestHandleEntries_CacheMiss(t *testing.T) {
+	req, err := http.NewRequest("GET", "/api/v1/entries", nil)
+	if err != nil {
+		t.Fatal("NewRequest failed: ", err.Error())
+	}
+
+	rec := httptest.NewRecorder()
+
+	s := server{
+		logger: log.New(os.Stdout, "", log.Lshortfile),
+		config: config{
+			qiitaID: "testuser",
+		},
+		cache: &memStorage{
+			items: make(map[string]item),
+			mu:    &sync.RWMutex{},
+		},
+		blogService: &blogservice.BlogService{
+			FetchFunc: []func() ([]structs.Entry, error){},
+		},
+	}
+
+	mockFunc := func() ([]structs.Entry, error) {
+		return []structs.Entry{
+			{Title: "a", URL: "https://example.com/a", CreatedAt: now},
+			{Title: "b", URL: "https://example.com/b", CreatedAt: now.Add(1 * time.Hour)},
+			{Title: "c", URL: "https://example.com/c", CreatedAt: now.Add(2 * time.Hour)},
+			{Title: "d", URL: "https://example.com/d", CreatedAt: now.Add(3 * time.Hour)},
+			{Title: "e", URL: "https://example.com/e", CreatedAt: now.Add(4 * time.Hour)},
+			{Title: "f", URL: "https://example.com/f", CreatedAt: now.Add(5 * time.Hour)},
+		}, nil
+	}
+	s.blogService.Add(mockFunc)
 
 	handler := s.handleEntries()
 
