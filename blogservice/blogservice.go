@@ -1,11 +1,14 @@
 package blogservice
 
 import (
+	"net/http"
 	"sync"
 
 	"github.com/shiimaxx/blog-aggregator/structs"
 	"golang.org/x/sync/errgroup"
 )
+
+var HTTPClient = http.DefaultClient
 
 type BlogService struct {
 	FetchFunc []func() ([]structs.Entry, error)

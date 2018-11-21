@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/shiimaxx/blog-aggregator/blogservice"
 	"github.com/shiimaxx/blog-aggregator/structs"
 )
 
@@ -27,7 +28,7 @@ func FetchEntries(ctx context.Context, userID string) ([]structs.Entry, error) {
 	errCh := make(chan error)
 	doneCh := make(chan struct{})
 	go func() {
-		res, err := http.DefaultClient.Do(req)
+		res, err := blogservice.HTTPClient.Do(req)
 		if err != nil {
 			errCh <- err
 			return

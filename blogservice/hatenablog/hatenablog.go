@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/shiimaxx/blog-aggregator/blogservice"
 	"github.com/shiimaxx/blog-aggregator/structs"
 	"golang.org/x/tools/blog/atom"
 )
@@ -37,7 +38,7 @@ func FetchEntries(ctx context.Context, userID, blogID, apiKey string) ([]structs
 	errCh := make(chan error)
 	doneCh := make(chan struct{})
 	go func() {
-		res, err := http.DefaultClient.Do(req)
+		res, err := blogservice.HTTPClient.Do(req)
 		if err != nil {
 			errCh <- err
 			return
