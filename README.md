@@ -1,6 +1,8 @@
 # blog-aggregator
 
 [![wercker status](https://app.wercker.com/status/80c41247bbc1cf9592f13bba6216b6ba/s/master "wercker status")](https://app.wercker.com/project/byKey/80c41247bbc1cf9592f13bba6216b6ba)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 
 Aggregate your entries for multi blog services.  
 Currently following blog services supports.
