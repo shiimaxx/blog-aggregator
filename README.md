@@ -1,6 +1,7 @@
 # blog-aggregator
 
 [![wercker status](https://app.wercker.com/status/80c41247bbc1cf9592f13bba6216b6ba/s/master "wercker status")](https://app.wercker.com/project/byKey/80c41247bbc1cf9592f13bba6216b6ba)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shiimaxx/blog-aggregator)](https://goreportcard.com/report/github.com/shiimaxx/blog-aggregator)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 
