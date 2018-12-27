@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"sync"
@@ -29,6 +30,7 @@ type server struct {
 }
 
 type config struct {
+	originURL    string
 	qiitaID      string
 	hatenaID     string
 	hatenaBlogID string
@@ -84,6 +86,7 @@ func (s *server) handleEntries() http.HandlerFunc {
 		})
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Access-Control-Allow-Origin", s.config.originURL)
 		var res entriesResponse
 		res.Entries = entries
 		if err := json.NewEncoder(w).Encode(res); err != nil {
@@ -98,6 +101,15 @@ func main() {
 		port = defaultListenPort
 	}
 
+	originURL := os.Getenv("ORIGIN_URL")
+	url, err := url.Parse(originURL)
+	if err != nil {
+		log.Fatal("Origin url parse failed")
+	}
+	if url.Scheme != "http" && url.Scheme != "https" {
+		log.Fatal("Invalid scheme in origin url")
+	}
+
 	qiitaID := os.Getenv("QIITA_ID")
 	hatenaID := os.Getenv("HATENA_ID")
 	hatenaBlogID := os.Getenv("HATENA_BLOG_ID")
@@ -108,6 +120,7 @@ func main() {
 		port:   port,
 		logger: log.New(os.Stdout, "", log.Lshortfile),
 		config: config{
+			originURL:    originURL,
 			qiitaID:      qiitaID,
 			hatenaID:     hatenaID,
 			hatenaBlogID: hatenaBlogID,
