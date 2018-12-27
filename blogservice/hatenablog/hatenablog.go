@@ -16,9 +16,18 @@ import (
 
 const baseURL = "https://blog.hatena.ne.jp"
 
+type Control struct {
+	Draft string `xml:"http://www.w3.org/2007/app draft"`
+}
+
+type Entry struct {
+	atom.Entry
+	Control Control `xml:"http://www.w3.org/2007/app control"`
+}
+
 // Result for hatenablog correction uri
 type Result struct {
-	Entries []atom.Entry `xml:"entry"`
+	Entries []Entry `xml:"entry"`
 }
 
 // FetchEntries fetch entry list of hatena blog
@@ -72,6 +81,10 @@ func FetchEntries(ctx context.Context, userID, blogID, apiKey string) ([]structs
 	var entries []structs.Entry
 
 	for _, e := range r.Entries {
+		if e.Control.Draft == "yes" {
+			continue
+		}
+
 		title := e.Title
 
 		var url string
